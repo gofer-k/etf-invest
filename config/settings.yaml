@@ -1,0 +1,15 @@
+data:
+  default_ticker: "ISAC"
+  period: "1y"
+  interval: "1w"
+
+features:
+  rolling_window_days: 20
+
+agent:
+  signal_threshold: 0.01  # 1% weekly return
+  lookback_days: 20
+
+backtest:
+  initial_capital: 10000.0
+  transaction_cost_pct: 0.0005
