@@ -10,6 +10,8 @@ from src.etf_agent.decision_engine import DecisionEngine
 from src.etf_agent.reports import generate_text_report
 from src.backtesting.engine import SimpleBacktester
 from src.backtesting.metrics import compute_cagr, compute_sharpe
+from src.visualization.plotter import plot_price_indicators_and_signals
+from src.visualization.plotter import plot_interactive_signals
 
 logger = get_logger(__name__)
 
@@ -33,6 +35,8 @@ def main() -> None:
     df = clean_prices(df)
     df = add_returns(df)
     df = add_technical_features(df, config)
+    print("=== ETF REPORT: indicators")
+    print(df[["Close", "MA50", "MA200", "golden_cross", "death_cross"]].tail())
 
     agent = DecisionEngine(config)
     decision = agent.generate_signal(df)
@@ -64,6 +68,18 @@ def main() -> None:
     print(f"CAGR: {cagr:.2%}")
     print(f"Sharpe ratio: {sharpe:.2f}")
 
+    # signals = df.apply(lambda row: "BUY" if row["return"] > threshold 
+    #                else "SELL" if row["return"] < -threshold 
+    #                else "HOLD", axis=1)    
 
+    # plot_price_indicators_and_signals(df, ticker, signals)
+
+    # agent_signals = df.apply(lambda row: agent.generate_signal(df.loc[:row.name])["action"], axis=1)
+
+    # plot_price_indicators_and_signals(df, ticker, agent_signals)
+    
+    signals = df.apply(lambda row: agent.generate_signal(df.loc[:row.name])["action"], axis=1)
+    plot_interactive_signals(df, ticker, signals)
+    
 if __name__ == "__main__":
     main()

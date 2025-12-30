@@ -3,7 +3,7 @@
 This project is a local, privacy-preserving ETF analysis and decision agent.
 
 Features:
-- Download historical ETF data (Yahoo Finance via `yfinance`)
+- Download historical ETF data (Yahoo Finance via `yfinance`, "https://www.marketwatch.com/investing/fund")
 - Clean and preprocess price data
 - Compute basic features (returns, volatility, drawdowns)
 - Simple forecasting model (linear regression)
