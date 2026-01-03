@@ -10,7 +10,6 @@ from src.etf_agent.decision_engine import DecisionEngine
 from src.etf_agent.reports import generate_text_report
 from src.backtesting.engine import SimpleBacktester
 from src.backtesting.metrics import compute_cagr, compute_sharpe
-from src.visualization.plotter import plot_price_indicators_and_signals
 from src.visualization.plotter import plot_interactive_signals
 
 logger = get_logger(__name__)
@@ -36,7 +35,7 @@ def main() -> None:
     df = add_returns(df)
     df = add_technical_features(df, config)
     print("=== ETF REPORT: indicators")
-    print(df[["Close", "MA50", "MA200", "golden_cross", "death_cross"]].tail())
+    print(df[["Close", "SMA50", "SMA200", "golden_cross", "death_cross"]].tail())
 
     agent = DecisionEngine(config)
     decision = agent.generate_signal(df)
@@ -79,7 +78,11 @@ def main() -> None:
     # plot_price_indicators_and_signals(df, ticker, agent_signals)
     
     signals = df.apply(lambda row: agent.generate_signal(df.loc[:row.name])["action"], axis=1)
-    plot_interactive_signals(df, ticker, signals)
+
+    periods = [20, 50, 100, 150, 200, 250]
+
+    for period in periods:
+        plot_interactive_signals(df, period, ticker, signals)
     
 if __name__ == "__main__":
     main()

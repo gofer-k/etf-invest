@@ -1,11 +1,11 @@
 # === Trend‑Following Logic ===
 # The agent will behavior:
 # Only BUY when:
-#     Long‑term trend is bullish (MA50 > MA200)
+#     Long‑term trend is bullish (SMA50 > SMA200)
 #     MACD crosses above signal (momentum confirmation)
 #     Drawdown is not extreme
 # Only SELL when:
-#     Trend turns bearish (MA50 < MA200)
+#     Trend turns bearish (SMA50 < SMA200)
 #     MACD crosses below signal (momentum breakdown)
 # HOLD otherwise
 
@@ -34,7 +34,7 @@ class DecisionEngine:
     def generate_signal(self, df: pd.DataFrame) -> Dict:
         """
         Trend-following strategy using:
-        - MA50 / MA200 (Golden/Death Cross)
+        - SMA50 / SMA200 (Golden/Death Cross)
         - MACD (12/26/9)
         - MACD (50/200/9)
         - Risk filters (volatility, drawdown)
@@ -43,8 +43,8 @@ class DecisionEngine:
         # === Extract latest values ===
         last = df.iloc[-1]
 
-        ma50 = last["MA50"]
-        ma200 = last["MA200"]
+        ma50 = last["SMA50"]
+        ma200 = last["SMA200"]
 
         macd = last["MACD_12_26"]
         macd_signal = last["MACD_signal_12_26"]
