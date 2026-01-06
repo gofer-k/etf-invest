@@ -8,3 +8,4 @@ PROCESSED_DATA_DIR = DATA_DIR / "processed"
 
 RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
 PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
+OUTPUT_DIR = ROOT_DIR / "output"

@@ -10,6 +10,8 @@ from src.etf_agent.decision_engine import DecisionEngine
 from src.etf_agent.reports import generate_text_report
 from src.backtesting.engine import SimpleBacktester
 from src.backtesting.metrics import compute_cagr, compute_sharpe
+from src.utils.export import export_compressed_json, export_report_to_json
+from src.utils.paths import OUTPUT_DIR
 from src.visualization.plotter import plot_interactive_signals
 
 logger = get_logger(__name__)
@@ -30,7 +32,7 @@ def main() -> None:
     ticker = args.ticker or config["data"]["default_ticker"]
 
     # df = load_etf_history(ticker, config, period=args.period, interval=args.interval)
-    df = load_etf_local_history(ticker, config, period=args.period, interval=args.interval)
+    df = load_etf_local_history(ticker, period=args.period, interval=args.interval)
     df = clean_prices(df)
     df = add_returns(df)
     df = add_technical_features(df, config)
@@ -84,5 +86,8 @@ def main() -> None:
     for period in periods:
         plot_interactive_signals(df, period, ticker, signals)
     
+    export_report_to_json(df, OUTPUT_DIR / "bollinger_rsi_macd_report.json")
+    export_compressed_json(df, OUTPUT_DIR / "bollinger_rsi_macd_report.json.gz")
+
 if __name__ == "__main__":
     main()

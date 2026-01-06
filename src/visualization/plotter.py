@@ -4,6 +4,8 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import os
 
+from src.utils.paths import OUTPUT_DIR
+
 
 def plot_interactive_signals(df: pd.DataFrame, period: int, ticker: str, signals: pd.Series):
     """
@@ -69,15 +71,11 @@ def plot_interactive_signals(df: pd.DataFrame, period: int, ticker: str, signals
         legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
     )
 
-    # === Save or show ===
-    output_dir = "output {period} days".format(period=period)
-    os.makedirs(output_dir, exist_ok=True)
-
-    price_path = os.path.join(output_dir, f"{ticker}_interactive_price_{period}d.html")
+    # === Save or show ===    
+    price_path = os.path.join(OUTPUT_DIR, f"{ticker}_interactive_price_{period}d.html")
     
     try:
         fig.show()
     except Exception:
         print(f"[INFO] No browser display. Saving interactive charts to HTML.")
         fig.write_html(price_path)
-

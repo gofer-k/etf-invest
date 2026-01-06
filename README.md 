@@ -13,6 +13,19 @@ Features:
 - Rule-based decision engine
 - CLI entry point via `python -m etf_agent.app`
 
+# Educational resources
+- https://www.investopedia.com/
+- https://www.etf.com/
+- https://www.tradingpedia.com/
+
+Technical indicators resources:
+- Moving avarage (SMA, EMA): https://www.investopedia.com/terms/m/movingaverage.asp
+- Moving average convergence/divergence (MACD): https://www.investopedia.com/terms/m/macd.asp
+- Relative Strength Index (RSI): https://www.investopedia.com/terms/r/rsi.asp
+- Bellinger Bands: https://www.investopedia.com/terms/b/bollingerbands.asp
+- Golden Cross and Death Cross: https://www.investopedia.com/ask/answers/121114/what-difference-between-golden-cross-and-death-cross-pattern.asp
+- Trading Indicators: https://www.tradingpedia.com/forex-trading-indicators/
+
 ## Setup
 
 ```bash

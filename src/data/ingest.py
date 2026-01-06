@@ -50,7 +50,6 @@ def load_etf_history(
 
 def load_etf_local_history(
     ticker: str,
-    config: Dict,
     period: str | None = None,
     interval: str | None = None,
 ) -> pd.DataFrame:
