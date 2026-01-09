@@ -18,6 +18,7 @@ def run_analysis(request: AnalysisRequest):
 
   export_report_to_json(df, OUTPUT_DIR / f"technical_report_{request.symbol_ticker}.json")
   output = export_compressed_json(df, OUTPUT_DIR / f"technical_report_{request.symbol_ticker}.gz")
+  
   # return df.to_dict(orient="records")
   return {
     "format": "gz",

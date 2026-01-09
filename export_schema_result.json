@@ -1,0 +1,76 @@
+{
+  "respond": {
+    "2019-01-02": {
+      "metadata": {
+        "Open": 43.23,
+        "High": 43.48,
+        "Low": 42.62,
+        "Close": 43.32,
+        "Volume": 8320,
+        "return": null
+      },
+      "indicators": {
+        "rolling_mean": null,
+        "rolling_std": null,
+        "volatility": null,
+        "max_drawdown": 0.0,
+        "price_above_ma": 0,
+        "SMA": [
+          {
+            "window": 20,
+            "rolling_std": null,
+            "BB_upper": null,
+            "BB_lower": null,
+            "BB_width": null,
+            "BB_percent": null
+          }
+        ],
+        "golden_cross": 0,
+        "death_cross": 0,
+        "EMA": [
+          {
+          "indow": 20,
+          "value": 0.0
+          }
+        ],
+        "MACD_12_26": {
+          "value": 0,
+          "signal": 0,
+          "hist": 0
+        },
+        "MACD_50_200": {
+          "value": -3.784542057912553,
+          "signal": -4.096509294746629,
+          "hist": 0.311967236834076
+        },
+        "RSI": null
+      },
+      "candlestick": {
+        "hammer": {
+          "price": 0,
+          "strength": 0.5
+        },
+        "inverted_hammer": {
+          "price": 0,
+          "strength": 0.5
+        },
+        "shooting_star": {
+          "price": 0,
+          "strength": 0.5
+        },
+        "engulfing": {
+          "price": 0,
+          "strength": 0.5
+        },
+        "morning_star": {
+          "price": 0,
+          "strength": 0.5
+        },
+        "harami": {
+          "price": 0,
+          "strength": 0.5
+        }
+      }
+    }
+  }
+}

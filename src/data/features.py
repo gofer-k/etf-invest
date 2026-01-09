@@ -68,7 +68,6 @@ def add_technical_features(df: pd.DataFrame, config: Dict) -> pd.DataFrame:
 def add_technical_features(df: pd.DataFrame, config: AnalysisRequest) -> pd.DataFrame:
   df = df.copy()
     
-  # window_lengths = [20, 50, 100, 150, 200, 250]    
   for wl in config.rolling_windows:
     logger.info("Adding technical features (rolling window = %d)", wl)
     df["rolling_mean"] = df["Close"].rolling(wl).mean()
@@ -78,13 +77,14 @@ def add_technical_features(df: pd.DataFrame, config: AnalysisRequest) -> pd.Data
     df["price_above_ma"] = (df["Close"] > df["rolling_mean"]).astype(int)
     
     # Simple Moving Averages
+    df[f"SMA{wl}_window"] = wl
     df[f"SMA{wl}"] = df["Close"].rolling(wl).mean()
     # Bollinger Bands
-    df[f"rolling_std{wl}"] = df["Close"].rolling(wl).std()
-    df[f"BB_upper{wl}"] = df[f"SMA{wl}"] + (df[f"rolling_std{wl}"] * 2)
-    df[f"BB_lower{wl}"] = df[f"SMA{wl}"] - (df[f"rolling_std{wl}"] * 2)
-    df[f"BB_width{wl}"] = df[f"BB_upper{wl}"] - df[f"BB_lower{wl}"]
-    df[f"BB_percent{wl}"] = (df["Close"] - df[f"BB_lower{wl}"]) / df[f"BB_width{wl}"]
+    df[f"SMA{wl}_rolling_std"] = df["Close"].rolling(wl).std()
+    df[f"SMA{wl}_BB_upper"] = df[f"SMA{wl}"] + (df[f"SMA{wl}_rolling_std"] * 2)
+    df[f"SMA{wl}_BB_lower"] = df[f"SMA{wl}"] - (df[f"SMA{wl}_rolling_std"] * 2)
+    df[f"SMA{wl}_BB_width"] = df[f"SMA{wl}_BB_upper"] - df[f"SMA{wl}_BB_lower"]
+    df[f"SMA{wl}_BB_percent"] = (df["Close"] - df[f"SMA{wl}_BB_lower"]) / df[f"SMA{wl}_BB_width"]
 
   # Golden Cross / Death Cross indicator
   # A classic signal:
@@ -94,13 +94,17 @@ def add_technical_features(df: pd.DataFrame, config: AnalysisRequest) -> pd.Data
   df["death_cross"] = (df["SMA50"] < df["SMA200"]).astype(int)
 
   # === MACD CLASSIC (12, 26, 9) ===
+  df["EMA12_window"] = 12
   df["EMA12"] = df["Close"].ewm(span=12, adjust=False).mean()
+  df["EMA26_window"] = 26
   df["EMA26"] = df["Close"].ewm(span=26, adjust=False).mean()
   df["MACD_12_26"] = df["EMA12"] - df["EMA26"]
   df["MACD_signal_12_26"] = df["MACD_12_26"].ewm(span=9, adjust=False).mean()
   df["MACD_hist_12_26"] = df["MACD_12_26"] - df["MACD_signal_12_26"]
   # === MACD LONG-TERM (50, 200, 9) === 
+  df["EMA50_window"] = 50
   df["EMA50"] = df["Close"].ewm(span=50, adjust=False).mean()
+  df["EMA200_window"] = 200
   df["EMA200"] = df["Close"].ewm(span=200, adjust=False).mean()
   df["MACD_50_200"] = df["EMA50"] - df["EMA200"]
   df["MACD_signal_50_200"] = df["MACD_50_200"].ewm(span=9, adjust=False).mean()
