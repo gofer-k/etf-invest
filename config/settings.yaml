@@ -4,7 +4,7 @@ data:
   interval: "1w"
 
 features:
-  rolling_window_days: 20
+  rolling_windows: 20
 
 agent:
   signal_threshold: 0.01  # 1% weekly return

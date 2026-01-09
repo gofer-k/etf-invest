@@ -12,7 +12,7 @@ from typing import Dict
 
 from src.utils.paths import RAW_DATA_DIR
 from src.utils.logger import get_logger
-
+import os
 
 logger = get_logger(__name__)
 
@@ -62,6 +62,31 @@ def load_etf_local_history(
 
     if not file_path.exists():
         raise FileNotFoundError(f"Local CSV not found: {file_path}")
+
+    logger.info("Loading local CSV for %s from %s", ticker, file_path)
+
+    df = pd.read_csv(file_path, parse_dates=["Date"], date_format="%m/%d/%Y", thousands=",", quotechar='"')
+    df = df.set_index("Date")
+
+    required_cols = {"Open", "High", "Low", "Close", "Volume"}
+    if not required_cols.issubset(df.columns):
+        raise ValueError(
+            f"CSV for {ticker} is missing required columns: {required_cols}"
+        )
+
+    logger.info("Loaded %d rows for %s", len(df), ticker)
+    return df
+
+def load_etf_local_history(
+    dataset_source: str,
+    ticker: str) -> pd.DataFrame:
+    """
+    Load ETF historical data from external local source file instead of yfinance.
+    """
+    file_path = Path(dataset_source)
+
+    if not file_path.exists():
+        raise FileNotFoundError(f"Local dateset not found: {file_path}")
 
     logger.info("Loading local CSV for %s from %s", ticker, file_path)
 

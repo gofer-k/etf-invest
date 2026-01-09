@@ -11,11 +11,15 @@ app = FastAPI()
 @app.post("/analytics/run")
 def run_analysis(request: AnalysisRequest):
   df = {}  
-  df = load_etf_local_history(request.symbol_ticker, period=request.rolling_windows, interval=request.interval)
+  df = load_etf_local_history(request.dataset_source, request.symbol_ticker)
   df = clean_prices(df)
   df = add_returns(df)
   df = add_technical_features(df, request)
 
-  export_report_to_json(df, OUTPUT_DIR / "technical_report_{request.symbol_ticker}.json")
-  export_compressed_json(df, OUTPUT_DIR / "technical_report_{request.symbol_ticker}.gz")
-  return df
+  export_report_to_json(df, OUTPUT_DIR / f"technical_report_{request.symbol_ticker}.json")
+  output = export_compressed_json(df, OUTPUT_DIR / f"technical_report_{request.symbol_ticker}.gz")
+  # return df.to_dict(orient="records")
+  return {
+    "format": "gz",
+    "response_file": output
+    }

@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 def add_technical_features(df: pd.DataFrame, config: Dict) -> pd.DataFrame:
   df = df.copy()
   features_cfg = config.get("features", {})
-  window = int(features_cfg.get("rolling_window_days", 20))
+  window = int(features_cfg.get("rolling_windows", 20))
 
   logger.info("Adding technical features (rolling window = %d)", window)
 
@@ -69,7 +69,7 @@ def add_technical_features(df: pd.DataFrame, config: AnalysisRequest) -> pd.Data
   df = df.copy()
     
   # window_lengths = [20, 50, 100, 150, 200, 250]    
-  for wl in config.rolling_window_days:
+  for wl in config.rolling_windows:
     logger.info("Adding technical features (rolling window = %d)", wl)
     df["rolling_mean"] = df["Close"].rolling(wl).mean()
     df["rolling_std"] = df["Close"].rolling(wl).std()

@@ -36,5 +36,7 @@ def export_compressed_json(df: pd.DataFrame, filename: str = "report_data.json.g
             json.dump(json_data, f, indent=2)
 
         print(f"[INFO] Compressed JSON saved to {filename}")
+        return filename
     except Exception as e:
         print(f"[ERROR] Failed to export compressed JSON: {e}")
+        return None
