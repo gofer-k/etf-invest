@@ -167,7 +167,7 @@ def df_to_json(df, date_col='Date'):
               indicators[k] = []
 
       candlestick = {}
-      for pattern in ["hammer","inverted_hammer","shooting_star","engulfing","morning_star","harami"]:
+      for pattern in ["hammer","inverted_hammer","shooting_star","engulfing","morning_star","harami", "doji"]:
         candlestick[pattern] = {
             "price": row.get(f"{pattern}_price"),
             "strength": row.get(f"{pattern}_strength")
