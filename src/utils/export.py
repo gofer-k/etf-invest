@@ -31,12 +31,9 @@ def export_compressed_json(df: pd.DataFrame, filename: str = "report_data.json.g
     - filename: output filename (default: 'report_data.json.gz')
     """
     try:
-        df_to_export = df.copy()
-        df_to_export.index = df_to_export.index.strftime('%Y-%m-%d')  # Convert datetime index to string        
-        df = df.where(pd.notnull(df), None) # convert NaN -> None
-        json_data = df_to_export.to_dict(orient="index")
+        json_text = df_to_json(df)
         with gzip.open(filename, "wt", encoding="utf-8") as f:
-            json.dump(json_data, f, indent=2)
+            json.dump(json_text, f, indent=2)
 
         print(f"[INFO] Compressed JSON saved to {filename}")
         return filename
