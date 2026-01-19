@@ -3,8 +3,8 @@ from typing import Dict
 import pandas as pd
 import numpy as np
 
-from src.utils.analysis_request import AnalysisRequest
-from src.utils.logger import get_logger
+from ..utils.analysis_request import AnalysisRequest
+from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -21,7 +21,7 @@ def add_technical_features(df: pd.DataFrame, config: Dict) -> pd.DataFrame:
   df["volatility"] = df["return"].rolling(window).std() * np.sqrt(252)
   df["max_drawdown"] = _max_drawdown(df["Close"])
   df["price_above_ma"] = (df["Close"] > df["rolling_mean"]).astype(int)
-  
+  df["VolumeZscore"] = (df["Volume"] - df["Volume"].rolling(20).mean()) / df["Volume"].rolling(20).std()
   
   window_lengths = [20, 50, 100, 150, 200, 250]
   for wl in window_lengths:
@@ -67,6 +67,8 @@ def add_technical_features(df: pd.DataFrame, config: Dict) -> pd.DataFrame:
 
 def add_technical_features(df: pd.DataFrame, config: AnalysisRequest) -> pd.DataFrame:
   df = df.copy()
+
+  df["VolumeZscore"] = (df["Volume"] - df["Volume"].rolling(20).mean()) / df["Volume"].rolling(20).std()
     
   for wl in config.rolling_windows:
     logger.info("Adding technical features (rolling window = %d)", wl)
@@ -74,15 +76,15 @@ def add_technical_features(df: pd.DataFrame, config: AnalysisRequest) -> pd.Data
     df["rolling_std"] = df["Close"].rolling(wl).std()
     df["volatility"] = df["return"].rolling(wl).std() * np.sqrt(252)
     df["max_drawdown"] = _max_drawdown(df["Close"])
-    df["price_above_ma"] = (df["Close"] > df["rolling_mean"]).astype(int)
+    df["price_above_ma"] = (df["Close"] > df["rolling_mean"]).astype(int)      
     
     # Simple Moving Averages
     df[f"SMA{wl}_window"] = wl
-    df[f"SMA{wl}"] = df["Close"].rolling(wl).mean()
+    df[f"SMA{wl}_rolling_mean"] = df["Close"].rolling(wl).mean()
     # Bollinger Bands
     df[f"SMA{wl}_rolling_std"] = df["Close"].rolling(wl).std()
-    df[f"SMA{wl}_BB_upper"] = df[f"SMA{wl}"] + (df[f"SMA{wl}_rolling_std"] * 2)
-    df[f"SMA{wl}_BB_lower"] = df[f"SMA{wl}"] - (df[f"SMA{wl}_rolling_std"] * 2)
+    df[f"SMA{wl}_BB_upper"] = df[f"SMA{wl}_rolling_mean"] + (df[f"SMA{wl}_rolling_std"] * 2)
+    df[f"SMA{wl}_BB_lower"] = df[f"SMA{wl}_rolling_mean"] - (df[f"SMA{wl}_rolling_std"] * 2)
     df[f"SMA{wl}_BB_width"] = df[f"SMA{wl}_BB_upper"] - df[f"SMA{wl}_BB_lower"]
     df[f"SMA{wl}_BB_percent"] = (df["Close"] - df[f"SMA{wl}_BB_lower"]) / df[f"SMA{wl}_BB_width"]
 
@@ -90,8 +92,8 @@ def add_technical_features(df: pd.DataFrame, config: AnalysisRequest) -> pd.Data
   # A classic signal:
   # 1 → SMA50 crossed above SMA200 (bullish)
   # 0 → otherwise
-  df["golden_cross"] = (df["SMA50"] > df["SMA200"]).astype(int)
-  df["death_cross"] = (df["SMA50"] < df["SMA200"]).astype(int)
+  df["golden_cross"] = (df["SMA50_rolling_mean"] > df["SMA200_rolling_mean"]).astype(int)
+  df["death_cross"] = (df["SMA50_rolling_mean"] < df["SMA200_rolling_mean"]).astype(int)
 
   # === MACD CLASSIC (12, 26, 9) ===
   df["EMA12_window"] = 12
@@ -118,6 +120,8 @@ def add_technical_features(df: pd.DataFrame, config: AnalysisRequest) -> pd.Data
   avg_loss = loss.rolling(20).mean()
   rs = avg_gain / avg_loss
   df["RSI"] = 100 - (100 / (1 + rs))
+
+  # df = df.dropna(subset=["VolumeZscore"])
 
   return df
 

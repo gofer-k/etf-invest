@@ -32,8 +32,8 @@ def export_compressed_json(df: pd.DataFrame, filename: str = "report_data.json.g
     """
     try:
         json_text = df_to_json(df)
-        with gzip.open(filename, "wt", encoding="utf-8") as f:
-            json.dump(json_text, f, indent=2)
+        with gzip.open(filename, "wt", encoding="utf-8") as f: f.write(json_text)    
+            # json.dump(json_text, f, indent=2)
 
         print(f"[INFO] Compressed JSON saved to {filename}")
         return filename
@@ -92,7 +92,7 @@ def collect_group_array_from_row_modified(row, prefix, expected_fields=None):
                 groups.setdefault(idx, {})[field] = val
             else:
                 # Accept common BB/rolling names even if not in expected_fields
-                if re.match(r'^(rolling_std|BB_upper|BB_lower|BB_width|BB_percent|value)$', field):
+                if re.match(r'^(rolling_std|BB_upper|BB_lower|BB_width|BB_percent)$', field):
                     groups.setdefault(idx, {})[field] = val
 
     if not groups:
@@ -128,6 +128,7 @@ def df_to_json(df, date_col='Date'):
           "Low": row.get("Low"),
           "Close": row.get("Close"),
           "Volume": row.get("Volume"),
+          "VolumeZscore": row.get("VolumeZscore"),
           "return": row.get("return")
       }
 
