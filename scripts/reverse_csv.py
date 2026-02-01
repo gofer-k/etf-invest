@@ -25,11 +25,8 @@ def reverse_csv(input_file, target_file):
     with open(target_file, 'a', newline='') as f:
         for i, row in enumerate(reversed_rows):
             if row:
-                if i == 0:  # Header row, no quotes
-                    f.write(','.join(row) + '\n')
-                else:  # Data rows, first column unquoted, others quoted
-                    quoted_row = [row[0]] + [f'"{field}"' for field in row[1:]]
-                    f.write(','.join(quoted_row) + '\n')
+                quoted_row = [row[0]] + [f'"{field}"' for field in row[1:]]
+                f.write(','.join(quoted_row) + '\n')
 
 
     print(f"Processed {input_file} -> {target_file}")

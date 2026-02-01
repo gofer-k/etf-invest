@@ -8,10 +8,10 @@
       "name": "Reverse CSV data",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/reverse_csv.py",
+      "program": "${workspaceFolder}/scripts/reverse_csv.py",
       "console": "integratedTerminal",
       "args": [
-        "${workspaceFolder}/data/raw/newREMX.csv",
+        "${workspaceFolder}/data/raw/REMX_new.csv",
         "${workspaceFolder}/data/processed/REMX.csv"
       ],
     },
