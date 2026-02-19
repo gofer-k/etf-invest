@@ -5,6 +5,14 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Python Debugger: ETF script",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/app.py",
+      "console": "integratedTerminal",
+      "args": ["--ticker", "ISAC", "--period", "3m", "--interval", "1h", "--acd_signals", "true"]
+    },
+    {
       "name": "Reverse CSV data",
       "type": "debugpy",
       "request": "launch",

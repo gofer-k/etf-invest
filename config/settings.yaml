@@ -5,6 +5,7 @@ data:
 
 features:
   rolling_windows: 20
+  acd_signals: false
 
 agent:
   signal_threshold: 0.01  # 1% weekly return

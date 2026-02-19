@@ -48,10 +48,8 @@ def load_etf_history(
     logger.info("Downloaded %d rows for %s", len(df), ticker)
     return df
 
-def load_etf_local_history(
+def load_cfg_etf_local_history(
     ticker: str,
-    period: str | None = None,
-    interval: str | None = None,
 ) -> pd.DataFrame:
     """
     Load ETF historical data from a local CSV file instead of yfinance.

@@ -9,7 +9,7 @@ from ..utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-def add_technical_features(df: pd.DataFrame, config: Dict) -> pd.DataFrame:
+def add_technical_features_offline(df: pd.DataFrame, config: Dict) -> pd.DataFrame:
   df = df.copy()
   features_cfg = config.get("features", {})
   window = int(features_cfg.get("rolling_windows", 20))
