@@ -5,12 +5,32 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Date converter",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/convert_data_format.py",
+      "console": "integratedTerminal",
+      "args": [
+        "${workspaceFolder}/data/raw/ETFBW20LV_reformat.csv",
+        "${workspaceFolder}/data/raw/ETFBW20LV_new.csv"
+      ]
+    },
+    {
       "name": "Python Debugger: ETF script",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/app.py",
       "console": "integratedTerminal",
-      "args": ["--ticker", "ISAC", "--period", "3m", "--interval", "1h", "--acd_signals", "true"]
+      "args": [
+        "--ticker",
+        "ISAC",
+        "--period",
+        "3m",
+        "--interval",
+        "1h",
+        "--acd_signals",
+        "true"
+      ]
     },
     {
       "name": "Reverse CSV data",

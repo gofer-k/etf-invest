@@ -1,6 +1,29 @@
 #!/usr/bin/env python3
 """
-Script to change date format in CSV from DD/MM/YYYY to MM/DD/YYYY.
+Script to change date format in CSV from dd/mm/YYYY to mm/dd/YYYY.
+
+Python Date Format Codes:
+    %Y - Year with century (e.g., 2024)
+    %y - Year without century (e.g., 24)
+    %m - Month as zero-padded decimal (01-12)
+    %B - Full month name (e.g., January)
+    %b - Abbreviated month name (e.g., Jan)
+    %d - Day of the month as zero-padded decimal (01-31)
+    %e - Day of the month as decimal number (1-31, space-padded)
+    %H - Hour (24-hour) as zero-padded decimal (00-23)
+    %I - Hour (12-hour) as zero-padded decimal (01-12)
+    %M - Minute as zero-padded decimal (00-59)
+    %S - Second as zero-padded decimal (00-59)
+    %p - AM or PM
+    %A - Full weekday name (e.g., Monday)
+    %a - Abbreviated weekday name (e.g., Mon)
+
+Examples:
+    %d.%m.%Y  (e.g., 25.12.2024)
+    %m/%d/%Y  (e.g., 12/25/2024)
+    %d/%m/%Y  (e.g., 25/12/2024)
+    %Y-%m-%d  (e.g., 2024-12-25)
+    %m-%d-%y  (e.g., 12-25-24)
 """
 
 import sys
@@ -60,7 +83,14 @@ def reformat_dates(input_file, output_file=None, input_date_format=None, output_
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or len(sys.argv) > 5:
-        print("Usage: python3 reformat_dates.py <input date format> <output date format> <input_file> <output_file>")
+        print("""
+              Usage: python3 reformat_dates.py <input date format> <output date format> <input_file> <output_file>
+              Examples:
+                %d.%m.%Y  (e.g., 25.12.2024)
+                %m/%d/%Y  (e.g., 12/25/2024)
+                %d/%m/%Y  (e.g., 25/12/2024)
+                %Y-%m-%d  (e.g., 2024-12-25)
+                %m-%d-%y  (e.g., 12-25-24)""")
         print("If output_file is not specified, input_file will be overwritten.")
         sys.exit(1)
 
