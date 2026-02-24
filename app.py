@@ -4,11 +4,10 @@ import pandas as pd
 
 from src.utils.config_loader import load_config
 from src.utils.logger import get_logger
-from src.data.ingest import load_cfg_etf_local_history, load_etf_history
-from src.data.ingest import load_etf_local_history
+from src.data.ingest import load_cfg_etf_local_history
 from src.data.preprocess import clean_prices, add_returns
-from src.data.features import add_technical_features, add_technical_features_offline
-from src.etf_agent.decision_engine import DecisionEngine
+from src.data.features import add_technical_features_offline
+from src.etf_agent.strategy_engine.decision_engine import MacdStrategyEngine
 from src.etf_agent.reports import generate_text_report
 from src.backtesting.engine import SimpleBacktester
 from src.backtesting.metrics import compute_cagr, compute_sharpe
@@ -52,11 +51,11 @@ def main() -> None:
     export_compressed_json(df, OUTPUT_DIR / "bollinger_rsi_macd_report.json.gz")
 
     if config["features"].get("acd_signals", True):
-        backtest_acd_system(df)
+        backtest_acd_system(config, df)
 
 def backtest_indicators(config: dict, df: pd.DataFrame, ticker: str):
-  agent = DecisionEngine(config)
-  decision = agent.generate_signal(df)
+  agent = MacdStrategyEngine(config)
+  decision = agent.generate_signals(df)
 
   report = generate_text_report(ticker, df, decision)
   print(report)
@@ -91,24 +90,32 @@ def backtest_indicators(config: dict, df: pd.DataFrame, ticker: str):
 
     # plot_price_indicators_and_signals(df, ticker, signals)
 
-    # agent_signals = df.apply(lambda row: agent.generate_signal(df.loc[:row.name])["action"], axis=1)
+    # agent_signals = df.apply(lambda row: agent.generate_signals(df.loc[:row.name])["action"], axis=1)
 
     # plot_price_indicators_and_signals(df, ticker, agent_signals)
-  signals = df.apply(lambda row: agent.generate_signal(df.loc[:row.name])["action"], axis=1)
+  signals = df.apply(lambda row: agent.generate_signals(df.loc[:row.name])["action"], axis=1)
 
   periods = [20, 50, 100, 150, 200, 250]
 
   for period in periods:
     plot_interactive_signals(df, period, ticker, signals)
 
-def backtest_acd_system(df: pd.DataFrame):
-  from src.models.acd_system import ACDSystem
-  acd = ACDSystem()
+def backtest_acd_system(config: dict, df: pd.DataFrame):
+  from src.etf_agent.strategy_engine.acd_system import AcdStrategyEngine
+  acd = AcdStrategyEngine(config)
   df = acd.pivotRange(df)
   df = acd.opening_range_A(df)
   df = acd.generate_signals(df)
   # acd.plot_signals(df)
   acd.plot_signals_interactive(df)
+
+def backtest_breakout_system(config: dict, df: pd.DataFrame):  
+  from src.etf_agent.strategy_engine.break_out_engine import run_vectorbt_breakout
+
+  period = config["backtest"].get("breakout_lookback", 20)
+  pf, indicators_df = run_vectorbt_breakout(df, lookback=period, price_field="Close", compute_indicators=[])
+  print(pf.stats())
+  plot_interactive_signals(indicators_df, period, "Breakout Strategy", pf.signals)
 
 if __name__ == "__main__":
     main()

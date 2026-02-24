@@ -6,16 +6,17 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import pandas as pd
 from dataclasses import dataclass
+from src.etf_agent.strategy_engine.strategy_engine import StrategyEngine
 from src.models.forecasting import SimpleForecaster
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 @dataclass
-class ACDSystem:
+class AcdStrategyEngine(StrategyEngine):
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, config: dict = None) -> None:
+        super().__init__(config=config)
 
     def pivotRange(self, df):
         """
