@@ -42,10 +42,11 @@ class BollingerBandsConfig(IndicatorConfig):
         })
 
 class AtrConfig(IndicatorConfig):
-    def __init__(self, window: int = 14):
+    def __init__(self, window: int = 14, k: float = 1.0):
         super().__init__(IndicatorType.ATR, {
             "window": window,
-            "key": "ATR{}".format(window)
+            "k": k,
+            "key": "ATR_{}".format(window)
         })
 
 class MacdConfig(IndicatorConfig):

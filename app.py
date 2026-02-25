@@ -2,6 +2,8 @@ import argparse
 
 import pandas as pd
 
+from src.data.indicators import AtrConfig, BollingerBandsConfig, EmaConfig, MacdConfig, RsiConfig, SmaConfig
+from src.etf_agent.strategy_engine.break_out_engine import BreakOutEngine
 from src.utils.config_loader import load_config
 from src.utils.logger import get_logger
 from src.data.ingest import load_cfg_etf_local_history
@@ -39,14 +41,31 @@ def main() -> None:
     # df = load_etf_history(ticker, config, period=args.period, interval=args.interval)
     df = load_cfg_etf_local_history(ticker)
     df = clean_prices(df)
-    df = add_returns(df)
-    df = add_technical_features_offline(df, config)
-    print("=== ETF REPORT: indicators")
-    print(df[["Close", "SMA50", "SMA200", "golden_cross", "death_cross"]].tail())
+    # df = add_returns(df)
+    # df = add_technical_features_offline(df, config)
+    # print("=== ETF REPORT: indicators")
+    # print(df[["Close", "SMA50", "SMA200", "golden_cross", "death_cross"]].tail())
     
     if config["backtest"]["enabled"]:
-      backtest_indicators(config, df, ticker)
-            
+      # backtest_indicators(config, df, ticker)
+      config["looback"] = 20
+      config["price"] = "Close"
+      SmaConfig(window=14)
+      SmaConfig(window=30)
+      SmaConfig(window=50)
+      EmaConfig(window=50)
+      EmaConfig(window=200)
+      bb = BollingerBandsConfig(window=20, num_std=2.0)
+      atr=AtrConfig(window=14, k=1.0)
+      macd=MacdConfig(fast_period=12, slow_period=26, signal_period=9)
+      rsi=RsiConfig(period=14, exit=45, long=55)
+      breakout_test = BreakOutEngine(config)
+      pf_a = breakout_test.atr_breakout(df['Close'], df["High"], df["Low"], atr)
+      pf_mr = breakout_test.macd_rsi_breakout(df['Close'], macd, rsi)
+      pf_bb = breakout_test.bollinger_breakout(df['Close'], bb, use_lower_exit=False)
+      breakout_test.summary([pf_a, pf_mr, pf_bb], ["Total Return [%]", "Sharpe Ratio", "Max Drawdown [%]", "Win Rate [%]"])
+      breakout_test.plot_equity_curves([pf_a[1], pf_mr[1], pf_bb[1]], ["ATR Breakout", "MACD+RSI Breakout", "Bollinger Bands Breakout"])
+
     export_report_to_json(df, OUTPUT_DIR / "bollinger_rsi_macd_report.json")
     export_compressed_json(df, OUTPUT_DIR / "bollinger_rsi_macd_report.json.gz")
 

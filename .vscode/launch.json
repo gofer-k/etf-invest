@@ -5,6 +5,14 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Backtesting",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/app.py",
+      "console": "integratedTerminal",
+      "args": ["--ticker", "ISAC", "--period", "3m", "--interval", "1h", "--backtest", "true"]
+    },
+    {
       "name": "Date converter",
       "type": "debugpy",
       "request": "launch",
