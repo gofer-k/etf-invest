@@ -126,8 +126,8 @@ class MarketstackClient:
       API_KEY = self.api_key
 
       async with MarketstackClient(API_KEY) as client:
-        tasks = [client.intraday(etf, interval) for etf in symbols.split(",")]
-        # tasks = [client.eod(etf) for etf in symbols.split(",")]
+        # tasks = [client.intraday(etf, interval) for etf in symbols.split(",")]
+        tasks = [client.eod(etf) for etf in symbols.split(",")]
         results = await asyncio.gather(*tasks)
 
         return dict(zip(symbols.split(","), results))

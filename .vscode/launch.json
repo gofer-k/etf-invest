@@ -5,12 +5,29 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Import csv data",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/import_data.py",
+      "console": "integratedTerminal",
+      "args": ["--input_file", "data/raw/ISAC.csv", "--ticket", "ISAC"]
+    },
+    {
       "name": "Backtesting",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/app.py",
       "console": "integratedTerminal",
-      "args": ["--ticker", "ISAC", "--period", "3m", "--interval", "1h", "--backtest", "true"]
+      "args": [
+        "--ticker",
+        "ISAC",
+        "--period",
+        "3m",
+        "--interval",
+        "1h",
+        "--backtest",
+        "true"
+      ]
     },
     {
       "name": "Date converter",
