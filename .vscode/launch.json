@@ -5,12 +5,20 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Download ETF data",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/data_downloader.py",
+      "console": "integratedTerminal",
+      "args": ["--tickers", "ISAC"]
+    },
+    {
       "name": "Import csv data",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/import_data.py",
       "console": "integratedTerminal",
-      "args": ["--input_file", "data/raw/ISAC.csv", "--ticket", "ISAC"]
+      "args": ["--input_file", "data/raw/IWMO.csv", "--ticket", "IWMO"]
     },
     {
       "name": "Backtesting",

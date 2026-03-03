@@ -18,7 +18,7 @@ def import_data() -> None:
     
     db_path = OUTPUT_DIR / f"cache.db"
     cache = CacheInventory(db_path)
-    cache.import_from_csv(db_path, args.input_file, args.ticket)
+    cache.import_ohlcv_csv(db_path, args.input_file, args.ticket)
     cache.stat(isToClose=True)
 
 if __name__ == "__main__":

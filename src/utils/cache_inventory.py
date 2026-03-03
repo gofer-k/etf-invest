@@ -1,3 +1,5 @@
+import csv
+
 import duckdb
 from duckdb.sqltypes import DOUBLE, FLOAT, VARCHAR, DuckDBPyType
 
@@ -14,44 +16,44 @@ def parse_suffix(x: str):
   return float(x)
 
 class CacheInventory:
-    def __init__(self, db_path: str = ":memory:"):
-      self.db_path = db_path
-      self.table_price_name = "price"
-      self.table_meta_name = "metadata"      
-      self.meta_sequence = self._sequence_name(self.table_meta_name)
-      self.price_sequence = self._sequence_name(self.table_price_name)
-      self.open()
-      self._init_db()        
-        
-    def _init_db(self,isToClose = False):   
-        resutt = self.con.execute(
-          f""" 
-          CREATE TABLE IF NOT EXISTS {self.table_meta_name} (
-            id INTEGER PRIMARY KEY DEFAULT nextval('{self.meta_sequence}'),
-            symbol TEXT NOT NULL,
-            exchange VARCHAR,
-            currency VARCHAR,
-            UNIQUE(id, symbol));
-          """)
-        result = self.con.execute(
-          f""" 
+  def __init__(self, db_path: str = ":memory:"):
+    self.db_path = db_path
+    self.table_price_name = "price"
+    self.table_meta_name = "metadata"      
+    self.meta_sequence = self._sequence_name(self.table_meta_name)
+    self.price_sequence = self._sequence_name(self.table_price_name)
+    self.open()
+    self._init_db()        
+      
+  def _init_db(self,isToClose = False):   
+      resutt = self.con.execute(
+        f""" 
+        CREATE TABLE IF NOT EXISTS {self.table_meta_name} (
+          id INTEGER PRIMARY KEY DEFAULT nextval('{self.meta_sequence}'),
+          symbol TEXT NOT NULL,
+          exchange VARCHAR,
+          currency VARCHAR,
+          UNIQUE(id, symbol));
+        """)
+      result = self.con.execute(
+        f""" 
           CREATE TABLE IF NOT EXISTS {self.table_price_name} (
-            id INTEGER PRIMARY KEY DEFAULT nextval('{self.price_sequence}'),
-            meta_id INTEGER NOT NULL,            
-            date TIMESTAMP NOT NULL,
-            open FLOAT,
-            high FLOAT,
-            low FLOAT,
-            close FLOAT,
-            volume FLOAT,
-            UNIQUE(id, date),
-            FOREIGN KEY (meta_id) REFERENCES {self.table_meta_name}(id)
-          );
-          """)
-        if isToClose:
-           self.close()
+          id INTEGER PRIMARY KEY DEFAULT nextval('{self.price_sequence}'),
+          meta_id INTEGER NOT NULL,            
+          date TIMESTAMP NOT NULL,
+          open FLOAT,
+          high FLOAT,
+          low FLOAT,
+          close FLOAT,
+          volume FLOAT,
+          UNIQUE(meta_id, date),
+          FOREIGN KEY (meta_id) REFERENCES {self.table_meta_name}(id)
+        );
+        """)
+      if isToClose:
+          self.close()
 
-    def _add_symbol(self, symbol: str, isToClose = False):   
+  def _add_symbol(self, symbol: str, isToClose = False):   
       row = self.con.execute(f"SELECT id FROM {self.table_meta_name} WHERE symbol = ?", [symbol]).fetchone()
       if row is None:
         row = self.con.execute(f"INSERT INTO {self.table_meta_name} (id, symbol) VALUES (nextval('{self.meta_sequence}'), ?)", [symbol]).fetchone()
@@ -62,84 +64,164 @@ class CacheInventory:
         self.close()
       return id_value
       
+  def _build_header_mapping(self, csv_path: str):
+    header_mapping = {}
+    with open(csv_path, 'r', newline='', encoding='utf-8-sig') as f:
+      reader = csv.reader(f)
+      rows = list(reader)      
+      if len(rows) == 1:
+        raise ValueError("Now to supported header format")
 
-    def import_from_csv(self, db_path: str, csv_path: str, symbol: str, timestamp_format: str = "%m/%d/%Y", isToClose = False):
-      """
-        Importuje dane OHLCV z pliku CSV do DuckDB.
+      input_header = rows[0]
+      # Process each row
+      for item in input_header:
+        item_norm = item.strip().lower()
+        if item_norm in ("Data", "date"):
+            header_mapping[item] = "date"
+        elif item_norm in ("Otwarcie", "open"):
+            header_mapping[item] = "open"
+        elif item_norm in ("max", "max.", "high"):
+            header_mapping[item] = "max"
+        elif item_norm in ("min", "min.", "low"):
+            header_mapping[item] = "low"
+        elif item_norm in ("ostatnio", "closed", "close", "last"):
+            header_mapping[item] = "close"
+        elif item_norm in ("wol.", "wolumen", "volume"):
+            header_mapping[item] = "volume"
 
-        Parametry:
-          db_path (str): ścieżka do pliku DuckDB (.duckdb)
-          csv_path (str): ścieżka do pliku CSV
-          timestamp_format (str): format timestampu (np. '%Y-%m-%d %H:%M:%S' lub 'auto')        
-      """   
-      ticket_id = self._add_symbol(symbol)
-      self.con.create_function("parse_suffix", parse_suffix, parameters=[VARCHAR], return_type=FLOAT)     
-      # epoch(STRPTIME(date::VARCHAR, '{timestamp_format}'))::INTEGER AS date,
-      self.con.execute(
-        f""" 
-        INSERT INTO {self.table_price_name} 
-        SELECT           
-            nextval('{self.price_sequence}') AS id,
-            {ticket_id} AS meta_id, 
-            STRPTIME(date::VARCHAR, '{timestamp_format}') AS date,
-            parse_suffix(REPLACE(open, ',', '')) AS open,
-            parse_suffix(REPLACE(high, ',', '')) AS high,
-            parse_suffix(REPLACE(low, ',', '')) AS low,
-            parse_suffix(REPLACE(close, ',', '')) AS close,
-            parse_suffix(REPLACE(volume, ',', '')) AS volume            
-        FROM read_csv_auto(
-            '{csv_path}', 
-            HEADER=TRUE, 
-            IGNORE_ERRORS=TRUE,
-            types={{'date': 'VaRCHAR', 'open': 'VARCHAR', 'high': 'VARCHAR', 'low': 'VARCHAR', 'close': 'VARCHAR', 'volume': 'VARCHAR'}}
-        )        
-        """
+    if len(header_mapping) != 6:
+      ValueError("Error: Unrecognized header format")          
+
+    return header_mapping    
+
+  def _ignore_duplicates(self, csv_path: str, ticket_id: int, timestamp_format: str, mapping_header: dict):
+    values_items = list(mapping_header.items())[1:]
+    cols_sql = ",\n            ".join([
+      f"parse_suffix(REPLACE(\"{csv_col}\", ',', '')) AS {db_col}" 
+      for csv_col, db_col in values_items
+    ])
+
+    csv_types = {f"'{col}'": "VARCHAR" for col in mapping_header}
+                #  ["Data", "Ostatnio", "Otwarcie", "Max.", "Min.", "Wol.", "Zmiana%"]}
+    types_str = ", ".join([f"{k}: {v}" for k, v in csv_types.items()])
+    return f"""
+      INSERT OR IGNORE INTO {self.table_price_name} (id, meta_id, date, close, open, high, low, volume)
+      SELECT           
+          nextval('{self.price_sequence}') AS id,
+          {ticket_id} AS meta_id, 
+          STRPTIME("date"::VARCHAR, '{timestamp_format}') AS date,
+          {cols_sql}
+      FROM read_csv_auto(
+          '{csv_path}', 
+          HEADER=TRUE, 
+          IGNORE_ERRORS=TRUE,
+          types={{{types_str}}}
       )
-
-      if isToClose:
-        self.close()
-
+      """
     
-    def open(self):
-       self.con = duckdb.connect(self.db_path)
-       self._create_sequence(self.price_sequence)
-       self._create_sequence(self.meta_sequence)
+  def _replace_records(self, csv_path: str, ticket_id: int, timestamp_format: str, mapping_header: dict):
+    cols_sql = ",\n            ".join([
+      f"parse_suffix(REPLACE(\"{csv_col}\", ',', '')) AS {db_col}" 
+      for csv_col, db_col in mapping_header.items()
+    ])
 
-    def _sequence_name(self, name: str):
-       return f"{name}_id_sequence"
+    csv_types = {f"'{col}'": "VARCHAR" for col in ["Data", "Ostatnio", "Otwarcie", "Max.", "Min.", "Wol.", "Zmiana%"]}
+    types_str = ", ".join([f"{k}: {v}" for k, v in csv_types.items()])
+    return """
+      INSERT OR REPLACE INTO {self.table_price_name} (id, meta_id, date, close, open, high, low, volume)
+      SELECT           
+          nextval('{self.price_sequence}') AS id,
+          {ticket_id} AS meta_id, 
+          STRPTIME(date::VARCHAR, '{timestamp_format}') AS date,
+          {cols_sql}          
+      FROM read_csv_auto(
+          '{csv_path}', 
+          HEADER=TRUE, 
+          IGNORE_ERRORS=TRUE,
+          types={{{types_str}}}
+      )
+      """ 
+    
+  def import_ohlcv_csv(self, db_path: str, csv_path: str, symbol: str, timestamp_format: str = "%m/%d/%Y", isToClose = False):    
+    """
+      Importuje dane OHLCV z pliku CSV do DuckDB.
 
-    def _create_sequence(self, table_name: str):
-      # DuckDB handles the check internally
-      self.con.execute(f"CREATE SEQUENCE IF NOT EXISTS {table_name} START 1;")   
+      Parametry:
+        db_path (str): ścieżka do pliku DuckDB (.duckdb)
+        csv_path (str): ścieżka do pliku CSV
+        timestamp_format (str): format timestampu (np. '%Y-%m-%d %H:%M:%S' lub 'auto')        
+    """   
+    ticket_id = self._add_symbol(symbol)
+    mapping = self._build_header_mapping(csv_path)
+    self.con.create_function("parse_suffix", parse_suffix, parameters=[VARCHAR], return_type=FLOAT)     
+    query = self._ignore_duplicates(csv_path, ticket_id, timestamp_format, mapping)
+    self.con.execute(query
+      # f""" 
+      # INSERT INTO {self.table_price_name} 
+      # SELECT           
+      #     nextval('{self.price_sequence}') AS id,
+      #     {ticket_id} AS meta_id, 
+      #     STRPTIME(date::VARCHAR, '{timestamp_format}') AS date,
+      #     parse_suffix(REPLACE(open, ',', '')) AS open,
+      #     parse_suffix(REPLACE(high, ',', '')) AS high,
+      #     parse_suffix(REPLACE(low, ',', '')) AS low,
+      #     parse_suffix(REPLACE(close, ',', '')) AS close,
+      #     parse_suffix(REPLACE(volume, ',', '')) AS volume            
+      # FROM read_csv_auto(
+      #     '{csv_path}', 
+      #     HEADER=TRUE, 
+      #     IGNORE_ERRORS=TRUE,
+      #     types={{'date': 'VaRCHAR', 'open': 'VARCHAR', 'high': 'VARCHAR', 'low': 'VARCHAR', 'close': 'VARCHAR', 'volume': 'VARCHAR'}}
+      # )        
+      # """
+    )
 
-    def close(self):
-      if self.con is not None:
-        self.con.close()
-        self.con = None
+    if isToClose:
+      self.close()
+
+  def open(self):
+    self.con = duckdb.connect(self.db_path)
+    self._create_sequence(self.price_sequence)
+    self._create_sequence(self.meta_sequence)
+
+  def _sequence_name(self, name: str):
+    return f"{name}_id_sequence"
+
+  def _create_sequence(self, table_name: str):
+    # DuckDB handles the check internally
+    self.con.execute(f"CREATE SEQUENCE IF NOT EXISTS {table_name} START 1;")   
+
+  def close(self):
+    if self.con is not None:
+      self.con.close()
+      self.con = None
 
 
-    def stat(self, isToClose = False):
+  def stat(self, isToClose=False):
       self.open()
-      for table in [self.table_price_name, self.table_meta_name]:
-        print("----{table} table stats:\nrow count:")
-        print(self.con.execute(f"SELECT COUNT(*) FROM {table};").fetchone()[0])
-        print("\nColumn stats:")
-        print(self.con.execute(
-            f"""
-            SELECT column_name, data_type, FROM duckdb_columns()
-            WHERE table_name = '{table}';
-            """).fetchdf())
-        print("\nStorage stats:")
-        print(self.con.execute(f"""SELECT COUNT(*) FROM {table};""").fetchdf())
-       
-      if isToClose: 
-        self.close()
-
-    def get(self, key):
-        return self.cache.get(key)
-
-    def set(self, key, value):
-        self.cache[key] = value
-
-    def clear(self):
-        self.cache.clear()
+      try:
+        for table in [self.table_meta_name, self.table_price_name]:
+          print(f"\n{'='*20} {table.upper()} STATS {'='*20}")
+          
+          # 1. Row Count & Storage info
+          res = self.con.execute(f"SELECT COUNT(*) as total_rows FROM {table}").fetchone()
+          print(f"Total rows: {res[0]}")
+          
+          # 2. Advanced Column Statistics (DuckDB specific)
+          # Funkcja SUMMARIZE zwraca: min, max, avg, std, null_percentage itp.
+          print("\nColumn Detailed Stats:")
+          print(self.con.execute(f"SUMMARIZE {table}").fetchdf())
+          
+          # 3. Schema info (Typy danych i klucze)
+          print("\nSchema Info:")
+          print(self.con.execute(f"""
+              SELECT column_name, data_type, is_nullable, column_default
+              FROM information_schema.columns
+              WHERE table_name = '{table}'
+              ORDER BY ordinal_position;
+          """).fetchdf())      
+      except Exception as e:
+        print(f"Error gathering stats: {e}")
+      finally:
+        if isToClose:
+          self.close()
