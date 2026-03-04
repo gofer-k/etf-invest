@@ -76,12 +76,12 @@ class CacheInventory:
       # Process each row
       for item in input_header:
         item_norm = item.strip().lower()
-        if item_norm in ("Data", "date"):
+        if item_norm in ("data", "date"):
             header_mapping[item] = "date"
-        elif item_norm in ("Otwarcie", "open"):
+        elif item_norm in ("otwarcie", "open"):
             header_mapping[item] = "open"
         elif item_norm in ("max", "max.", "high"):
-            header_mapping[item] = "max"
+            header_mapping[item] = "high"
         elif item_norm in ("min", "min.", "low"):
             header_mapping[item] = "low"
         elif item_norm in ("ostatnio", "closed", "close", "last"):
@@ -109,7 +109,7 @@ class CacheInventory:
       SELECT           
           nextval('{self.price_sequence}') AS id,
           {ticket_id} AS meta_id, 
-          STRPTIME("date"::VARCHAR, '{timestamp_format}') AS date,
+          STRPTIME("Data"::VARCHAR, '{timestamp_format}') AS date,
           {cols_sql}
       FROM read_csv_auto(
           '{csv_path}', 
@@ -142,7 +142,7 @@ class CacheInventory:
       )
       """ 
     
-  def import_ohlcv_csv(self, db_path: str, csv_path: str, symbol: str, timestamp_format: str = "%m/%d/%Y", isToClose = False):    
+  def import_ohlcv_csv(self, db_path: str, csv_path: str, symbol: str, timestamp_format: str = "%d.%m.%Y", isToClose = False):    
     """
       Importuje dane OHLCV z pliku CSV do DuckDB.
 
@@ -155,26 +155,7 @@ class CacheInventory:
     mapping = self._build_header_mapping(csv_path)
     self.con.create_function("parse_suffix", parse_suffix, parameters=[VARCHAR], return_type=FLOAT)     
     query = self._ignore_duplicates(csv_path, ticket_id, timestamp_format, mapping)
-    self.con.execute(query
-      # f""" 
-      # INSERT INTO {self.table_price_name} 
-      # SELECT           
-      #     nextval('{self.price_sequence}') AS id,
-      #     {ticket_id} AS meta_id, 
-      #     STRPTIME(date::VARCHAR, '{timestamp_format}') AS date,
-      #     parse_suffix(REPLACE(open, ',', '')) AS open,
-      #     parse_suffix(REPLACE(high, ',', '')) AS high,
-      #     parse_suffix(REPLACE(low, ',', '')) AS low,
-      #     parse_suffix(REPLACE(close, ',', '')) AS close,
-      #     parse_suffix(REPLACE(volume, ',', '')) AS volume            
-      # FROM read_csv_auto(
-      #     '{csv_path}', 
-      #     HEADER=TRUE, 
-      #     IGNORE_ERRORS=TRUE,
-      #     types={{'date': 'VaRCHAR', 'open': 'VARCHAR', 'high': 'VARCHAR', 'low': 'VARCHAR', 'close': 'VARCHAR', 'volume': 'VARCHAR'}}
-      # )        
-      # """
-    )
+    self.con.execute(query)
 
     if isToClose:
       self.close()

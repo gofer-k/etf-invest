@@ -18,7 +18,7 @@
       "request": "launch",
       "program": "${workspaceFolder}/import_data.py",
       "console": "integratedTerminal",
-      "args": ["--input_file", "data/raw/IWMO.csv", "--ticket", "IWMO"]
+      "args": ["--input_file", "data/raw/IS3N.csv", "--ticket", "IS3N"]
     },
     {
       "name": "Backtesting",

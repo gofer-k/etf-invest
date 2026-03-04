@@ -1,7 +1,7 @@
 import argparse
 
 from src.utils.cache_inventory import CacheInventory
-from src.utils.paths import OUTPUT_DIR
+from src.utils.paths import RAW_DATA_DIR
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="ETF AI Agent CLI")
@@ -16,7 +16,7 @@ def import_data() -> None:
     if not args.ticket:
         raise ValueError("Ticket (symbol) name is required. Please provide it using --ticket argument.")
     
-    db_path = OUTPUT_DIR / f"cache.db"
+    db_path = RAW_DATA_DIR / f"cache.db"
     cache = CacheInventory(db_path)
     cache.import_ohlcv_csv(db_path, args.input_file, args.ticket)
     cache.stat(isToClose=True)
