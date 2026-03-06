@@ -33,6 +33,7 @@ class CacheInventory:
           symbol TEXT NOT NULL,
           exchange VARCHAR,
           currency VARCHAR,
+          symbol_suffix VARCHAR,
           UNIQUE(id, symbol));
         """)
       result = self.con.execute(
