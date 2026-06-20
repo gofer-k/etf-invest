@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package trading;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+service InvestAgentService {
+// Two-side communication: stream of requests to stream of results
+rpc CalculateIndicators (stream TradingRequest) returns (stream TradingResponse);
+}
+
+// Maps to lib/model/price_result.dart: IndexPriceItem
+message IndexPriceItem {
+int32 id = 1;
+int32 asset_id = 2;
+double open = 3;
+double high = 4;
+double low = 5;
+double close = 6;
+double volume = 7;
+google.protobuf.Timestamp date_time = 8;
+}
+
+// Maps to lib/model/indicator_schema.dart: IndicatorType
+enum IndicatorType {
+UNDEFINED = 0;
+PRICE = 1;
+BOLLINGER_BANDS = 2;
+SMA = 3;
+EMA = 4;
+MACD = 5;
+RSI = 6;
+VOLUME = 7;
+KST = 8;
+ROC = 9;
+}
+
+// Maps to lib/model/indicator_schema.dart: Indicator
+message Indicator {
+int32 id = 1;
+string name = 2;
+IndicatorType type = 3;
+// Dynamic parameters (Map<String, dynamic>)
+google.protobuf.Struct parameters = 4;
+}
+
+// Constraint 1: TradingRequest class definition
+message TradingRequest {
+repeated IndexPriceItem prices = 1;
+repeated Indicator indicators = 2;
+}
+
+// --- Response Models ---
+
+// Constraint 2: Compliable with IndicatorResultMap
+// (Map<IndicatorType, List<BaseIndicatorResult>>)
+message TradingResponse {
+// Key is the IndicatorType (as a string or integer)
+// We use string key to map easily to IndicatorType.name
+map<string, IndicatorResultList> results = 1;
+}
+
+// Represents List<BaseIndicatorResult>
+message IndicatorResultList {
+repeated IndicatorSeries items = 1;
+}
+
+// Represents a single BaseIndicatorResult (e.g., a specific SMA series)
+message IndicatorSeries {
+string chart_style = 1; // Maps to ChartStyle enum name
+Indicator config = 2;
+repeated IndicatorPoint points = 3;
+}
+
+// Represents a single point in the series (BaseIndicatorValue)
+message IndicatorPoint {
+google.protobuf.Timestamp date_time = 1;
+// Flexible map for varied results:
+// e.g., {"mean": 150.0, "std": 2.5} for SMA, or {"value": 70.0} for RSI
+map<string, double> values = 2;
+}
